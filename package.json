@@ -2,5 +2,11 @@
   "name": "vodconnect-player",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "level": "^7.0.0",
+    "os": "^0.1.2",
+    "socket.io-client": "^4.1.3"
+  }
 }
