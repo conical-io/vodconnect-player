@@ -176,7 +176,7 @@ export class App {
     HoldingScreen(){
         var that = this;
         //media path
-        var mediaPath = "/home/pi/vodconnect-player"
+        var mediaPath = __dirname
         var connectedScreen = mediaPath + "/media/connected.jpg";
         var notconnectedScreen = mediaPath + "/media/not-connected.jpg";
         exec("sudo killall -9 fbi");
