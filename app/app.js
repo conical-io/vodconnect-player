@@ -3,7 +3,10 @@ import { io } from "socket.io-client";
 import { MakeID } from "../tools.js";
 import { Speedtest } from "./speed-test.js";
 import os, { totalmem } from "os";
-
+import omx from "node-omxplayer";
+import {exec}  from "child_process";
+import path from "path";
+const __dirname = path.resolve(path.dirname(''));
 
 export class App {
     constructor(){
@@ -13,6 +16,8 @@ export class App {
         this.socket = null;
         this.connected = false;
         this.runningSpeedTest = false;
+        this.omxplayer = null;
+        this.audioOutput = "local",
 
         this.Init()
         .then(function() {
@@ -24,6 +29,7 @@ export class App {
         var that = this;
         return new Promise(function(resolve, reject) {
             that.OSStatSend()
+            that.HoldingScreen()
             //set unique ID
             that.store.get('unique_id', function (err, value) {
                 if(err){
@@ -41,15 +47,18 @@ export class App {
         
     }
     InitSocket(that){
-        const socket = io("http://streamcontrol.alivechurch.org.uk:3001");
+        const socket = io("http://alive.vodconnect.live:3001");
         socket.on("connect", function(){
             that.socket = socket;
             that.connected = true;
-            that.ActionSendUID()
+            that.ActionSendUID();
+            console.log("connected!")
+            that.HoldingScreen();
         })
         socket.on("disconnect", function(){
             that.socket = null;
             that.connected = false;
+            that.HoldingScreen();
             setTimeout(function () {
                 if(!that.connected){
                     socket.connect()
@@ -63,14 +72,15 @@ export class App {
                that.Speedtest()
             }else if(data.command=="stop"){
             //perform omx stop
-                console.log("stop playing")
+                that.Stop()
             }else if(data.command=="play"){
-                console.log("play command")
-                console.log(data)
+                that.Play(data);
                 
                 //perform omx play
             }else if(data.command=="hold"){
                 //put on a holding slide
+            }else if(data.command=="reboot"){
+                that.Reboot()
             }else if(data.command=="ping"){
                 //pong
                 that.Emit("pong", data);
@@ -125,6 +135,70 @@ export class App {
         }
     }
 
+    Play(data){
+        if(this.omxplayer!==null){
+            this.omxplayer.quit();
+            this.omxplayer = null;
+        }
+        console.log("play " + data.data.src)
+        this.omxplayer = omx(data.data.src, this.audioOutput)
+    }
+    Stop(data){
+        if(this.omxplayer!==null){
+            this.omxplayer.quit();
+            this.omxplayer = null;
+        }
+        exec("sudo killall -9 omxplayer.bin", function(error, stdout, stderr){
+            if(error){
+                console.log(error);
+                return
+            }
+            if(stderr){
+                console.log(stderr);
+                return
+            }
+            console.log(stdout)
+        });
+    }
+    Reboot(){
+        exec("sudo reboot", function(error, stdout, stderr){
+            if(error){
+                console.log(error);
+                return
+            }
+            if(stderr){
+                console.log(stderr);
+                return
+            }
+            console.log(stdout)
+        });
+    }
+    HoldingScreen(){
+        var that = this;
+        //media path
+        var mediaPath = "/home/pi/vodconnect-player"
+        var connectedScreen = mediaPath + "/media/connected.jpg";
+        var notconnectedScreen = mediaPath + "/media/not-connected.jpg";
+        exec("sudo killall -9 fbi");
+        setTimeout(function(){
+            var file = notconnectedScreen
+            if(that.connected){
+                file = connectedScreen
+            }
+
+            exec("sudo fbi -d /dev/fb0 -T 1 " + file + " --nocomments --noverbose --noaudtoup --noautodown", function(error, stdout, stderr){
+                if(error){
+                    console.log(error);
+                    return
+                }
+                if(stderr){
+                    console.log(stderr);
+                    return
+                }
+                console.log(stdout)
+            });
+        }, 1000);
+    }
 
     Emit(a,b){
         if(this.socket && this.socket!==null && this.connected){

@@ -6,6 +6,7 @@
   "type": "module",
   "dependencies": {
     "level": "^7.0.0",
+    "node-omxplayer": "^0.6.1",
     "os": "^0.1.2",
     "socket.io-client": "^4.1.3"
   }

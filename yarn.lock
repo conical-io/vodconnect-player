@@ -225,6 +225,11 @@ node-gyp-build@~4.2.1:
   resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.2.3.tgz#ce6277f853835f718829efb47db20f3e4d9c4739"
   integrity sha512-MN6ZpzmfNCRM+3t57PTJHgHyw/h4OWnZ6mR8P5j/uZtqQr46RRuDE/P+g3n0YR/AiYXeWixZZzaip77gdICfRg==
 
+node-omxplayer@^0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/node-omxplayer/-/node-omxplayer-0.6.1.tgz#85c8fffb034f3fec66ceaa1fb569f937a0a2914f"
+  integrity sha512-yRhzO8iDwN6fzMs862xrCDu4vnjpRmus8yzu2S9WP14OqgeB0epdKipJro+C9iqIQ6OD5Ao25ZuftZ1Lw/kisA==
+
 os@^0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/os/-/os-0.1.2.tgz#f29a50c62908516ba42652de42f7038600cadbc2"

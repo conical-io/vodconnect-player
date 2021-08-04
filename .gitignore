@@ -168,3 +168,5 @@ Temporary Items
 # .pnp.*
 
 # End of https://www.toptal.com/developers/gitignore/api/yarn,node,osx
+
+vodconnect-player-data/
