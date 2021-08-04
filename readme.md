@@ -44,7 +44,7 @@ $ sudo nano /boot/cmdline.txt
 - Add `logo.nologo` to the end of the line to remove the Raspberry PI logos from displaying
 
 ```
-$ sudo nano /boot/cmdline.txt
+$ sudo nano /boot/config.txt
 ```
 - add `disable_splash=1` at the end of the file.
 
