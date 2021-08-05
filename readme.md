@@ -51,7 +51,7 @@ $ sudo nano /boot/config.txt
 
 ## 6. Install the code
 ```
-$ wget https://github.com/conical-io/vodconnect-player/archive/refs/heads/master.zip
+$ wget https://github.com/conical-io/vodconnect-player/archive/refs/tags/1.0.zip
 $ unzip master.zip
 $ cd vodconnect-player-master
 $ yarn install
