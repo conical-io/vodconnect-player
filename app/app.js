@@ -2,7 +2,7 @@ import level from "level";
 import { io } from "socket.io-client";
 import { MakeID } from "../tools.js";
 import { Speedtest } from "./speed-test.js";
-import os, { totalmem } from "os";
+import os, { totalmem, networkInterfaces } from "os";
 import omx from "node-omxplayer";
 import {exec}  from "child_process";
 import path from "path";
@@ -18,6 +18,7 @@ export class App {
         this.runningSpeedTest = false;
         this.omxplayer = null;
         this.audioOutput = "local",
+        this.osAwaitingAck = []
 
         this.Init()
         .then(function() {
@@ -28,7 +29,6 @@ export class App {
     Init(){
         var that = this;
         return new Promise(function(resolve, reject) {
-            that.OSStatSend()
             that.HoldingScreen()
             //set unique ID
             that.store.get('unique_id', function (err, value) {
@@ -54,6 +54,9 @@ export class App {
             that.ActionSendUID();
             console.log("connected!")
             that.HoldingScreen();
+            setTimeout(function(){
+                that.OSStatSend()
+            }, 3000);
         })
         socket.on("disconnect", function(){
             that.socket = null;
@@ -63,7 +66,7 @@ export class App {
                 if(!that.connected){
                     socket.connect()
                 }
-            }, 5000);
+            }, 6000);
         })
         socket.on("command", function(data){
             
@@ -84,6 +87,12 @@ export class App {
             }else if(data.command=="ping"){
                 //pong
                 that.Emit("pong", data);
+            }else if(data.command=="osack"){
+                //stat acknownledged
+                //remove id from array
+                if(that.osAwaitingAck.indexOf(data.data)>-1){
+                    that.osAwaitingAck.splice(that.osAwaitingAck.indexOf(data.data), 1)
+                }
             }
         })
     }
@@ -111,7 +120,26 @@ export class App {
         var loadAvg = os.loadavg();
         var upTime = os.uptime();
         var cpus = os.cpus();
+
+        //network info
+
+        const nets = networkInterfaces();
+        const netResults = {}; // Or just '{}', an empty object
+
+        for (const name of Object.keys(nets)) {
+            for (const net of nets[name]) {
+                // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+                if (net.family === 'IPv4' && !net.internal) {
+                    if (!netResults[name]) {
+                        netResults[name] = [];
+                    }
+                    netResults[name]=net.address;
+                }
+            }
+        }
+        var usage_id = MakeID(16)
         var usage = {
+            usage_id: usage_id,
             totalMem: totalmem,
             totalMemGB: totalMemGb,
             freeMem: freeMem,
@@ -120,13 +148,26 @@ export class App {
             usedMemGB: usedMemGb,
             memoryUsagePerc: usagePerc,
             cpus: cpus.length, 
-            la: loadAvg
+            la: loadAvg,
+            ips:netResults
         }
+        this.osAwaitingAck.push(usage_id);
         that.Emit("oslogs", usage);
-        setTimeout(function () {
-            that.OSStatSend()  
-        },10000)
+        if(this.osAwaitingAck.length>4){
+            this.AutoDisconnect()
+        }else{    
+            setTimeout(function () {
+                that.OSStatSend()  
+            },10000)
+        }
         
+    }
+    AutoDisconnect(){
+        this.osAwaitingAck = [];
+        if(this.socket!==null){
+            this.socket.disconnect();
+        }
+        this.HoldingScreen();
     }
 
     ActionSendUID(){
